@@ -64,6 +64,9 @@ func Decode(dst, src []byte) (n int, err error) {
 	if len(src)%3 == 2 {
 		a := decodeTable[src[len(src)-2]]
 		b := decodeTable[src[len(src)-1]]
+		if a < 0 || b < 0 {
+			return 0, errors.New("base45: invalid character")
+		}
 		v := a + b*45
 		if v >= 0x100 {
 			return 0, errors.New("base45: invalid value")
