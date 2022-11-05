@@ -20,6 +20,12 @@ func Encode(dst, src []byte) {
 	}
 }
 
+func EncodeString(src []byte) string {
+	dst := make([]byte, EncodedLen(len(src)))
+	Encode(dst, src)
+	return string(dst)
+}
+
 func EncodedLen(n int) int {
 	return n/2*3 + n%2*2
 }
