@@ -15,6 +15,10 @@ func TestEncode(t *testing.T) {
 		{"Hello!!", "%69 VD92EX0"},
 		{"base-45", "UJCLQE7W581"},
 		{"ietf!", "QED8WEX0"},
+
+		// examples
+		{"some data with \x00 and \ufeff", "VQEF$DC44IECOCCE4FAWE2249440/DG743XN"},
+		{"Hello, world!", "%69 VDK2EV4404ESVDX0"},
 	}
 
 	for i, tc := range tests {
