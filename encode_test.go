@@ -1,6 +1,8 @@
 package base45
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestEncode(t *testing.T) {
 	tests := []struct {
