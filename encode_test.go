@@ -1,6 +1,8 @@
 package base45
 
 import (
+	"bytes"
+	"strings"
 	"testing"
 )
 
@@ -8,6 +10,7 @@ func TestEncode(t *testing.T) {
 	tests := []struct {
 		src, dst string
 	}{
+		// examples from RFC 9285
 		{"AB", "BB8"},
 		{"Hello!!", "%69 VD92EX0"},
 		{"base-45", "UJCLQE7W581"},
@@ -28,5 +31,43 @@ func BenchmarkEncode(b *testing.B) {
 	dst := make([]byte, EncodedLen(len(src)))
 	for i := 0; i < b.N; i++ {
 		Encode(dst, src)
+	}
+}
+
+func TestEncoder(t *testing.T) {
+	tests := []struct {
+		src, dst string
+	}{
+		// examples from RFC 9285
+		{"AB", "BB8"},
+		{"Hello!!", "%69 VD92EX0"},
+		{"base-45", "UJCLQE7W581"},
+		{"ietf!", "QED8WEX0"},
+
+		// long input
+		{strings.Repeat("AB", 1024), strings.Repeat("BB8", 1024)},
+	}
+
+	for i, tc := range tests {
+		var dst bytes.Buffer
+		enc := NewEncoder(&dst)
+
+		n, err := enc.Write([]byte(tc.src))
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		if n != len(tc.src) {
+			t.Errorf("%d: unexpected wrote bytes: %d", i, n)
+		}
+
+		if err := enc.Close(); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		if dst.String() != tc.dst {
+			t.Errorf("unexpected result: want %q, got %q", tc.dst, dst.String())
+		}
 	}
 }
