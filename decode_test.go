@@ -1,6 +1,10 @@
 package base45
 
-import "testing"
+import (
+	"io"
+	"strings"
+	"testing"
+)
 
 func TestDecode(t *testing.T) {
 	tests := []struct {
@@ -52,5 +56,29 @@ func BenchmarkDecode(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		Decode(dst, src)
+	}
+}
+
+func TestDecoder(t *testing.T) {
+	tests := []struct {
+		src, dst string
+	}{
+		{"BB8", "AB"},
+		{"%69 VD92EX0", "Hello!!"},
+		{"UJCLQE7W581", "base-45"},
+		{"QED8WEX0", "ietf!"},
+	}
+
+	for i, tc := range tests {
+		r := strings.NewReader(tc.src)
+		dec := NewDecoder(r)
+		dst, err := io.ReadAll(dec)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		if string(dst) != tc.dst {
+			t.Errorf("%d: want %q, got %q", i, tc.dst, string(dst))
+		}
 	}
 }

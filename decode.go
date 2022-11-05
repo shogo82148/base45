@@ -2,6 +2,7 @@ package base45
 
 import (
 	"errors"
+	"io"
 )
 
 var decodeTable = [256]int{
@@ -84,6 +85,85 @@ func DecodeString(s string) ([]byte, error) {
 	return buf[:n], err
 }
 
+// DecodedLen returns the maximum length in bytes of the decoded data
+// corresponding to n bytes of base45-encoded data.
 func DecodedLen(n int) int {
-	return n/3*2 + n%3/2
+	return n/3*2 + // triple chars are decoded to a byte pair
+		n%3/2 // pair chars are decode a byte
+}
+
+type decoder struct {
+	r io.Reader
+
+	err     error
+	readErr error      // error from r.Read
+	buf     [1024]byte // leftover input
+	nbuf    int
+	out     []byte // leftover decoded output
+	outbuf  [1024 / 3 * 2]byte
+}
+
+func NewDecoder(r io.Reader) io.Reader {
+	return &decoder{r: r}
+}
+
+func (dec *decoder) Read(buf []byte) (n int, err error) {
+	// Use leftover decoded output from last read.
+	if len(dec.out) > 0 {
+		n = copy(buf, dec.out)
+		dec.out = dec.out[n:]
+		return n, nil
+	}
+	if dec.err != nil {
+		return 0, dec.err
+	}
+
+	// Refill buffer.
+	for dec.nbuf < 3 && dec.readErr == nil {
+		nn := len(buf) / 2 * 3
+		if nn < 3 {
+			nn = 3
+		}
+		if nn > len(dec.buf) {
+			nn = len(dec.buf)
+		}
+		nn, dec.readErr = dec.r.Read(dec.buf[dec.nbuf:nn])
+		dec.nbuf += nn
+	}
+
+	if dec.nbuf < 3 {
+		// decode final fragment
+		var nw int
+		nw, dec.err = Decode(dec.outbuf[:], dec.buf[:dec.nbuf])
+		dec.nbuf = 0
+		dec.out = dec.outbuf[:nw]
+		n = copy(buf, dec.out)
+		dec.out = dec.out[n:]
+		if n > 0 || len(buf) == 0 && len(dec.out) > 0 {
+			return n, nil
+		}
+		if dec.err != nil {
+			return 0, dec.err
+		}
+		dec.err = dec.readErr
+		if errors.Is(dec.err, io.EOF) && dec.nbuf > 0 {
+			dec.err = io.ErrUnexpectedEOF
+		}
+		return 0, dec.err
+	}
+
+	// Decode chunk into p, or d.out and then p if p is too small.
+	nr := dec.nbuf / 3 * 3
+	nw := dec.nbuf / 3 * 2
+	if nw > len(buf) {
+		nw, dec.err = Decode(dec.outbuf[:], dec.buf[:nr])
+		dec.out = dec.outbuf[:nw]
+		n = copy(buf, dec.out)
+		dec.out = dec.out[n:]
+	} else {
+		n, dec.err = Decode(buf, dec.buf[:nr])
+	}
+	dec.nbuf -= nr
+	copy(dec.buf[:dec.nbuf], dec.buf[nr:])
+	return n, dec.err
 }
