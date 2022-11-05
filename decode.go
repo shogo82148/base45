@@ -74,6 +74,13 @@ func Decode(dst, src []byte) (n int, err error) {
 	return pos, nil
 }
 
+// DecodeString returns the bytes represented by the base45 string s.
+func DecodeString(s string) ([]byte, error) {
+	buf := make([]byte, DecodedLen(len(s)))
+	n, err := Decode(buf, []byte(s))
+	return buf[:n], err
+}
+
 func DecodedLen(n int) int {
 	return n/3*2 + n%3/2
 }
