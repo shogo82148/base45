@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"io"
 	"log"
@@ -32,7 +33,7 @@ func main() {
 }
 
 func decode() error {
-	dec := base45.NewDecoder(os.Stdin)
+	dec := base45.NewDecoder(&eolReader{r: os.Stdin})
 	_, err := io.Copy(os.Stdout, dec)
 	if err != nil {
 		return err
@@ -50,4 +51,16 @@ func encode() error {
 		return err
 	}
 	return nil
+}
+
+type eolReader struct {
+	r io.Reader
+}
+
+func (r *eolReader) Read(p []byte) (n int, err error) {
+	n, err = r.r.Read(p)
+	if idx := bytes.IndexByte(p[:n], '\n'); idx >= 0 {
+		return idx, io.EOF
+	}
+	return
 }
