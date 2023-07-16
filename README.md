@@ -3,7 +3,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/shogo82148/base45.svg)](https://pkg.go.dev/github.com/shogo82148/base45)
 [![test](https://github.com/shogo82148/base45/actions/workflows/test.yml/badge.svg)](https://github.com/shogo82148/base45/actions/workflows/test.yml)
 
-Package base64 implements base64 encoding as specified by [RFC 9285](https://www.rfc-editor.org/rfc/rfc9285.html).
+Package base45 implements base45 encoding as specified by [RFC 9285](https://www.rfc-editor.org/rfc/rfc9285.html).
 
 ## SYNOPSIS
 
