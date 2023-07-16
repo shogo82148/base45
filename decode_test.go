@@ -49,13 +49,19 @@ func TestDecodeString(t *testing.T) {
 		}
 	}
 }
+
 func BenchmarkDecode(b *testing.B) {
-	src := make([]byte, EncodedLen(2953))
-	dst := make([]byte, 2953)
+	src := make([]byte, EncodedLen(8192))
+	dst := make([]byte, 8192)
+	Encode(src, dst)
+
+	b.SetBytes(int64(len(src)))
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		Decode(dst, src)
+		if _, err := Decode(dst, src); err != nil {
+			b.Error(err)
+		}
 	}
 }
 
