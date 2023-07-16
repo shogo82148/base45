@@ -31,8 +31,9 @@ func TestEncode(t *testing.T) {
 }
 
 func BenchmarkEncode(b *testing.B) {
-	src := make([]byte, 2953)
+	src := make([]byte, 8192)
 	dst := make([]byte, EncodedLen(len(src)))
+	b.SetBytes(int64(len(src)))
 	for i := 0; i < b.N; i++ {
 		Encode(dst, src)
 	}
