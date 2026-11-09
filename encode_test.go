@@ -76,3 +76,27 @@ func TestEncoder(t *testing.T) {
 		}
 	}
 }
+
+func TestEncoder_EmptyWriteAfterOddWrite(t *testing.T) {
+	var dst bytes.Buffer
+	enc := NewEncoder(&dst)
+
+	if n, err := enc.Write([]byte("A")); err != nil || n != 1 {
+		t.Fatalf("Write(%q) = %d, %v; want 1, nil", "A", n, err)
+	}
+	if n, err := enc.Write(nil); err != nil || n != 0 {
+		t.Fatalf("Write(nil) = %d, %v; want 0, nil", n, err)
+	}
+	if n, err := enc.Write([]byte{}); err != nil || n != 0 {
+		t.Fatalf("Write([]byte{}) = %d, %v; want 0, nil", n, err)
+	}
+	if n, err := enc.Write([]byte("B")); err != nil || n != 1 {
+		t.Fatalf("Write(%q) = %d, %v; want 1, nil", "B", n, err)
+	}
+	if err := enc.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := dst.String(), "BB8"; got != want {
+		t.Errorf("unexpected result: want %q, got %q", want, got)
+	}
+}

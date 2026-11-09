@@ -52,6 +52,9 @@ func (enc *encoder) Write(data []byte) (n int, err error) {
 	if enc.err != nil {
 		return 0, enc.err
 	}
+	if len(data) == 0 {
+		return 0, nil
+	}
 
 	// Leading fringe.
 	if enc.nbuf > 0 {
